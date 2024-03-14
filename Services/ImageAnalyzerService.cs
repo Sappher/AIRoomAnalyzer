@@ -8,12 +8,14 @@ public class ImageAnalyzerService : IImageAnalyzerService
     private readonly ILogger<ImageAnalyzerService> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly IPromptsService _promptsService;
+    private readonly HomeAssistantService _homeAssistantService;
 
-    public ImageAnalyzerService(ILogger<ImageAnalyzerService> logger, IServiceProvider serviceProvider, IPromptsService promptsService)
+    public ImageAnalyzerService(ILogger<ImageAnalyzerService> logger, IServiceProvider serviceProvider, IPromptsService promptsService, HomeAssistantService homeAssistantService)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
         _promptsService = promptsService;
+        _homeAssistantService = homeAssistantService;
     }
 
     public async Task<ImageAnalyzeReport> AnalyzeImage(byte[] data, CancellationToken? cancellationToken)
@@ -54,6 +56,10 @@ public class ImageAnalyzerService : IImageAnalyzerService
 
             var report = new ImageAnalyzeReport { error = false, image = data, response = roomResponse };
             _logger.LogInformation($"Analyzed image, general feel in  {roomResponse.RoomName} is {roomResponse.GeneralFeel}");
+
+            // Report to HA. Temp method for now
+            _ = Task.Run(() => _homeAssistantService.Report("input_text.camera1", report));
+
             return report;
         }
         catch (Exception ex)

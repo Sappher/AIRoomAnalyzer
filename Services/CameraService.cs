@@ -1,36 +1,31 @@
 using System.Diagnostics;
+using System.Net.NetworkInformation;
 using CameraService.Configuration;
 using HADotNet.Core.Clients;
 using Helpers;
 
 namespace CameraService
 {
-    public class CameraService : BackgroundService, ICameraService
+    public class CameraService : BackgroundService
     {
         public string Guid;
         protected bool _connected = false;
 
         private readonly ILogger<CameraService> _logger;
         private readonly IServiceProvider _serviceProvider;
-        private readonly IConfiguration _configuration;
         private readonly IImageAnalyzerService _imageAnalyzerService;
         public readonly CameraServiceConfiguration _camera;
-        private readonly ServiceClient _serviceClient;
 
-        protected int _frameSaveInterval = 10000;
-        protected int _lastFrameSaved = 0;
         public byte[]? lastImage;
         public ImageAnalyzeReport? lastReport;
 
-        public CameraService(string guid, ILogger<CameraService> logger, IServiceProvider serviceProvider, IConfiguration configuration, IImageAnalyzerService imageAnalyzerService, CameraServiceConfiguration camera, ServiceClient serviceClient)
+        public CameraService(string guid, ILogger<CameraService> logger, IServiceProvider serviceProvider, IImageAnalyzerService imageAnalyzerService, CameraServiceConfiguration camera)
         {
             Guid = guid;
             _logger = logger;
             _serviceProvider = serviceProvider;
-            _configuration = configuration;
             _imageAnalyzerService = imageAnalyzerService;
             _camera = camera;
-            _serviceClient = serviceClient;
 
             _logger.LogInformation("CameraService created for camera: " + _camera.Name);
         }
@@ -41,16 +36,45 @@ namespace CameraService
             await ExecuteAsync(cancellationToken);
         }
 
+        public void EnableAnalyzer()
+        {
+            _camera.EnableAnalyzer = true;
+        }
+
+        public void DisableAnalyzer()
+        {
+            _camera.EnableAnalyzer = false;
+        }
+
         public async Task ConnectToCamera(CancellationToken stoppingToken)
         {
             try
             {
                 _logger.LogInformation($"Adding camera: {_camera.Name} from {_camera.Url}");
+
                 var frameCaptureInterval = _camera.FrameCaptureInterval != null ? _camera.FrameCaptureInterval : 20;
                 if (frameCaptureInterval < 5)
                 {
                     _logger.LogWarning($"Frame capture interval for camera {_camera.Name} is too low, setting it to 5");
                     frameCaptureInterval = 5;
+                }
+
+                // Extract the hostname or IP address from the URL
+                var uri = new Uri(_camera.Url);
+                var host = uri.Host;
+
+                // Ping the camera to see if it's online
+                var ping = new Ping();
+                var reply = await ping.SendPingAsync(host);
+
+                if (reply.Status != IPStatus.Success)
+                {
+                    _logger.LogError($"Camera {_camera.Name} is not online, skipping");
+                    return;
+                }
+                else
+                {
+                    _logger.LogInformation($"Camera {_camera.Name} is online, starting ffmpeg process");
                 }
 
                 var startInfo = new ProcessStartInfo
@@ -60,11 +84,14 @@ namespace CameraService
                     Arguments = $"-y {_camera.ExtraFFMpegInputArguments} -i {_camera.Url} -r 1/{frameCaptureInterval} {_camera.ExtraFFMpegOutputArguments} -f image2pipe -vcodec png -", // Continuous png stream
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
-                    RedirectStandardError = true,
+                    RedirectStandardError = _camera.ShowFFMpegOutput == true ? false : true,
                     CreateNoWindow = true
                 };
 
                 using var process = Process.Start(startInfo) ?? throw new Exception("Failed to start ffmpeg process");
+
+                _logger.LogInformation($"ffmpeg process started for camera {_camera.Name} with arguments: {startInfo.Arguments}");
+
                 using (var output = process.StandardOutput.BaseStream)
                 {
                     var buffer = new byte[16 * 1024];
@@ -85,16 +112,6 @@ namespace CameraService
                                 // reset the memory stream
                                 ms.Position = 0;
                                 ms.SetLength(0);
-
-                                try
-                                {
-                                    var resultState = await _serviceClient.CallService("text.set_value", new { entity_id = "text.test", value = $"Image from {_camera.Name} at {DateTime.Now}" });
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError(ex, "Error sending state update to Home Assistant");
-                                }
-
 
                                 if (_camera.EnableAnalyzer == true && stoppingToken.IsCancellationRequested == false)
                                 {
@@ -131,8 +148,11 @@ namespace CameraService
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Error handling camera connection of {_camera.Name}: {ex.Message}");
-                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken); // Wait for 5 seconds before retrying
+                    if (!stoppingToken.IsCancellationRequested)
+                    {
+                        _logger.LogError($"Error handling camera connection of {_camera.Name}: {ex.Message}, trying again in 5 seconds...");
+                        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken); // Wait for 5 seconds before retrying
+                    }
                 }
             }
         }

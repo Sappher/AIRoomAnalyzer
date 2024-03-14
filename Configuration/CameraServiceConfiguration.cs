@@ -11,5 +11,6 @@ namespace CameraService.Configuration
         public int? FrameCaptureInterval { get; set; }
         public string? ExtraFFMpegInputArguments { get; set; }
         public string? ExtraFFMpegOutputArguments { get; set; }
+        public bool ShowFFMpegOutput { get; set; } = false;
     }
 }

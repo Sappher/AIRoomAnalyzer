@@ -1,56 +1,29 @@
-public class HomeAssistantService : IHomeAssistantService
+using HADotNet.Core.Clients;
+
+public class HomeAssistantService
 {
     private readonly ILogger<HomeAssistantService> _logger;
     private readonly IServiceProvider _serviceprovider;
+
+    protected ServiceClient? _serviceClient;
 
     public HomeAssistantService(ILogger<HomeAssistantService> logger, IServiceProvider serviceprovider)
     {
         _logger = logger;
         _serviceprovider = serviceprovider;
+
+        _serviceClient = serviceprovider.GetService<ServiceClient>();
     }
 
-    public string TestService()
+    public async Task<bool> Report(string entity_id, ImageAnalyzeReport report)
     {
-        return "Test";
-    }
-
-    /*public async Task<HttpResponseMessage> GetEntities()
-    {
-        var ha = _serviceprovider.GetRequiredService<IHomeAssistantService>();
-        var entities = await ha.GetEntities();
-        return new HttpResponseMessage()
+        if (_serviceClient == null)
         {
-            Content = new StringContent(JsonSerializer.Serialize(entities))
-        };
+            _logger.LogError("ServiceClient is null, cannot report to Home Assistant");
+            return false;
+        }
+        await _serviceClient.CallService("input_text.set_value", new { entity_id, value = $"General feel at {DateTime.Now}: {report?.response?.GeneralFeel ?? "Error in report"}" });
+        _logger.LogInformation($"Reported to Home Assistant: {entity_id} - {report?.response?.GeneralFeel}");
+        return true;
     }
-
-    public async Task<HttpResponseMessage> GetStates()
-    {
-        var ha = _serviceprovider.GetRequiredService<IHomeAssistantService>();
-        var states = await ha.GetStates();
-        return new HttpResponseMessage()
-        {
-            Content = new StringContent(JsonSerializer.Serialize(states))
-        };
-    }
-
-    public async Task<HttpResponseMessage> GetServices()
-    {
-        var ha = _serviceprovider.GetRequiredService<IHomeAssistantService>();
-        var services = await ha.GetServices();
-        return new HttpResponseMessage()
-        {
-            Content = new StringContent(JsonSerializer.Serialize(services))
-        };
-    }
-
-    public async Task<HttpResponseMessage> CallService(string domain, string service, string? entityId = null, Dictionary<string, object>? serviceData = null)
-    {
-        var ha = _serviceprovider.GetRequiredService<IHomeAssistantService>();
-        var response = await ha.CallService(domain, service, entityId, serviceData);
-        return new HttpResponseMessage()
-        {
-            Content = new StringContent(JsonSerializer.Serialize(response))
-        };
-    }*/
 }
