@@ -8,7 +8,7 @@ namespace CameraService
 {
     public class CameraService : BackgroundService
     {
-        public string Guid;
+        public string Id;
         protected bool _connected = false;
 
         private readonly ILogger<CameraService> _logger;
@@ -17,11 +17,11 @@ namespace CameraService
         public readonly CameraServiceConfiguration _camera;
 
         public byte[]? lastImage;
-        public ImageAnalyzeReport? lastReport;
+        public ImageAnalyzeReport lastReport = new ImageAnalyzeReport() { image = [], error = false, response = new AIRoomResponse() { } };
 
-        public CameraService(string guid, ILogger<CameraService> logger, IServiceProvider serviceProvider, IImageAnalyzerService imageAnalyzerService, CameraServiceConfiguration camera)
+        public CameraService(string id, ILogger<CameraService> logger, IServiceProvider serviceProvider, IImageAnalyzerService imageAnalyzerService, CameraServiceConfiguration camera)
         {
-            Guid = guid;
+            Id = id;
             _logger = logger;
             _serviceProvider = serviceProvider;
             _imageAnalyzerService = imageAnalyzerService;
@@ -119,7 +119,11 @@ namespace CameraService
                                     // Send the image to be analyzed. Don't wait for it to execute, continue executing
                                     _ = Task.Run(() => _imageAnalyzerService.AnalyzeImage(data, stoppingToken).ContinueWith((resp) => { lastReport = resp.Result; lastImage = resp.Result.image; }), stoppingToken);
                                 }
-                                else lastReport = new ImageAnalyzeReport() { image = data, error = false, response = new AIRoomResponse() { } };
+                                else
+                                {
+                                    lastImage = data;
+                                    lastReport = new ImageAnalyzeReport() { image = data, error = false, response = new AIRoomResponse() { } };
+                                }
                             }
 
                             if (stoppingToken.IsCancellationRequested)

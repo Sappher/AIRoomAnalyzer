@@ -21,6 +21,7 @@ public class CameraServiceController : ControllerBase
     [HttpGet("services", Name = "GetServices")]
     public IActionResult GetServices()
     {
+        _logger.LogInformation("Getting camera services");
         return Ok(_cameraFactory.GetCameraServices());
     }
 
@@ -38,7 +39,28 @@ public class CameraServiceController : ControllerBase
             _logger.LogInformation($"Found service {guid}, name of camera {service?._camera.Name}");
             if (service?.lastReport == null) return NotFound();
 
-            return Ok(new CameraServiceResponse { CameraName = service._camera.Name, LastReport = service?.lastReport! });
+            var lastReport = service?.lastReport!;
+            if (lastReport != null) _logger.LogInformation($"Last report for camera {service?._camera.Name} was {lastReport.response?.GeneralFeel}");
+            else _logger.LogInformation($"Last report for camera {service?._camera.Name} was null");
+
+            return Ok(new CameraServiceResponse { CameraName = service._camera.Name, CameraId = service.Id, IsAnalyzerEnabled = service._camera.EnableAnalyzer, LastResponse = lastReport == null ? new() : lastReport.response });
+        }
+    }
+
+    [HttpGet("image/{guid}", Name = "GetImage")]
+    public IActionResult GetImage(string guid)
+    {
+        var service = _cameraFactory.GetCameraService(guid);
+        if (service == null)
+        {
+            _logger.LogWarning($"Could not find camera service {guid}");
+            return NotFound();
+        }
+        else
+        {
+            _logger.LogInformation($"Found service {guid}, name of camera {service?._camera.Name}");
+            if (service?.lastImage == null) return NotFound();
+            else return Ok(Convert.ToBase64String(service?.lastImage ?? []));
         }
     }
 

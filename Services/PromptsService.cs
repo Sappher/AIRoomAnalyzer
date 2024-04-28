@@ -21,6 +21,11 @@ public class PromptsService : IPromptsService
             foreach (var prompt in prompts)
                 FixedPromps.Add(ChatMessage.FromSystem(prompt));
         }
+        var trackedObjects = _config.GetSection("TrackedObjects").Get<List<string>>();
+        if (trackedObjects != null)
+        {
+            FixedPromps.Add(ChatMessage.FromSystem("Try to find these following objects in the image and if they're found, place them in a JSON array in the response with key trackedObjects: " + string.Join(", ", trackedObjects)));
+        }
         else _logger.LogWarning("No fixed prompts found in configuration.");
     }
 }

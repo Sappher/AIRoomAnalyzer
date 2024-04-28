@@ -44,16 +44,12 @@ public class ImageAnalyzerService : IImageAnalyzerService
                 MaxTokens = 300,
                 Messages = messages,
                 N = 1
-            }, cancellationToken: cancellationToken ?? CancellationToken.None);
-
-            if (response == null) throw new Exception("NULL response from AI");
+            }, cancellationToken: cancellationToken ?? CancellationToken.None) ?? throw new Exception("NULL response from AI");
             if (response.Successful == false) throw new Exception($"Unsuccessfull response from AI: {response.Error?.Message}");
             if (!response.Choices.Any()) throw new Exception("No choices in the AI response?");
             var responseStr = response.Choices.First().Message.Content ?? "";
             if (responseStr.Length <= 0) throw new Exception("Empty response from AI");
-            var roomResponse = JsonConvert.DeserializeObject<AIRoomResponse>(responseStr.Replace("```json", "").Replace("```", ""));
-            if (roomResponse == null) throw new Exception($"Could not convert AI response to AIRoomResponse, raw response was: {responseStr}");
-
+            var roomResponse = JsonConvert.DeserializeObject<AIRoomResponse>(responseStr.Replace("```json", "").Replace("```", "")) ?? throw new Exception($"Could not convert AI response to AIRoomResponse, raw response was: {responseStr}");
             var report = new ImageAnalyzeReport { error = false, image = data, response = roomResponse };
             _logger.LogInformation($"Analyzed image, general feel in  {roomResponse.RoomName} is {roomResponse.GeneralFeel}");
 

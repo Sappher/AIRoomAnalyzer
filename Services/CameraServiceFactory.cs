@@ -24,10 +24,9 @@ namespace CameraService
 
             foreach (var camera in _cameras)
             {
-                var guid = Guid.NewGuid().ToString();
-                _logger.LogInformation($"Adding {camera.Name} service, guid {guid}");
-                var service = ActivatorUtilities.CreateInstance<CameraService>(_serviceProvider, camera, guid);
-                _cameraServices.Add(guid, service);
+                _logger.LogInformation($"Adding {camera.Name} service, id {camera.Id}");
+                var service = ActivatorUtilities.CreateInstance<CameraService>(_serviceProvider, camera, camera.Id);
+                _cameraServices.Add(camera.Id, service);
                 tasks.Add(service.StartAsync(stoppingToken));
             }
 

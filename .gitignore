@@ -1,3 +1,4 @@
+.mono
 bin/
 obj/
 appsettings*.json

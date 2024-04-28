@@ -18,7 +18,7 @@ Build image:
 
 Run with docker:
 
-    docker run -p 8080:8080 -v ./appsettings.Development.json:/app/appsettings.json aiproxy
+    docker run -p 8080:8080 -v ./appsettings.Development.json:/app/appsettings.json --network=host aiproxy
 
 Access Swagger UI: http://localhost:8080/swagger/index.html
 
