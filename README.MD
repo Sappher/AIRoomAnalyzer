@@ -46,8 +46,10 @@ Provide appsettings.json like this:
             "Url": "http://localhost:8123",
             "ApiKey": "XXX"
         },
+        "TrackedObjects": ["phone", "laptop"],
         "Cameras": [
             {
+                "Id": "TestCamera",
                 "Name": "CAM 1",
                 "Url": "",
                 "ExtraFFMpegInputArguments": "-rtsp_transport tcp",
