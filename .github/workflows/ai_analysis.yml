@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run DocGen
-        uses: Sappher/DocGen@v0.0.2
+        uses: Sappher/DocGen@v0.0.4
         with:
           prompts-folder: docs/gen/prompts
           output-folder: docs/gen/docs
@@ -29,3 +29,4 @@ jobs:
           confluence-page-map: |
             GENERAL.MD=65780
             ARCHITECTURE.MD=98495
+          enable-embeddings: false
