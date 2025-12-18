@@ -14,12 +14,13 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run DocGen
-        uses: Sappher/DocGen@v0.0.1
+        uses: Sappher/DocGen@v0.0.2
         with:
           prompts-folder: docs/gen/prompts
           output-folder: docs/gen/docs
           openai-model: gpt-4.1-mini
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          enable-git: false
           github-token: ${{ secrets.GITHUB_TOKEN }}
           enable-confluence: true
           confluence-base-url: "https://sappher.atlassian.net/wiki/"
