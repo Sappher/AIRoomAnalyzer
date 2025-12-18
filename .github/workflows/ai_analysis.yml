@@ -29,4 +29,4 @@ jobs:
           confluence-page-map: |
             GENERAL.MD=65780
             ARCHITECTURE.MD=98495
-          enable-embeddings: false
+          enable-embeddings: true
