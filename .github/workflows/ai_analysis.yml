@@ -1,0 +1,30 @@
+name: AI Analysis
+
+on:
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run DocGen
+        uses: Sappher/DocGen@v.0.0.1
+        with:
+          prompts-folder: docs/gen/prompts
+          output-folder: docs/gen/docs
+          openai-model: gpt-4.1-mini
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          enable-confluence: true
+          confluence-base-url: "https://sappher.atlassian.net/wiki/"
+          confluence-email: ${{ secrets.CONFLUENCE_EMAIL }}
+          confluence-api-token: ${{ secrets.CONFLUENCE_API_TOKEN }}
+          confluence-page-map: |
+            GENERAL.MD=65780
+            ARCHITECTURE.MD=98495
