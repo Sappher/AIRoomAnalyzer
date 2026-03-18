@@ -25,7 +25,7 @@ jobs:
           output-folder: docs/gen/docs
           openai-model: gpt-5.2-codex
           codex-api-key: ${{ secrets.OPENAI_API_KEY }}
-          odex-sandbox: workspace-write
+          codex-sandbox: workspace-write
           enable-git: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
           enable-confluence: false
