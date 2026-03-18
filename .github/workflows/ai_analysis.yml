@@ -14,19 +14,18 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run DocGen
-        uses: Sappher/DocGen@v0.0.4
+        uses: Sappher/DocGen@beta-codex
         with:
           prompts-folder: docs/gen/prompts
           output-folder: docs/gen/docs
-          openai-model: gpt-4.1-mini
+          openai-model: gpt-5.2-codex
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          enable-git: false
+          enable-git: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          enable-confluence: true
+          enable-confluence: false
           confluence-base-url: "https://sappher.atlassian.net/wiki/"
           confluence-email: ${{ secrets.CONFLUENCE_EMAIL }}
           confluence-api-token: ${{ secrets.CONFLUENCE_API_TOKEN }}
           confluence-page-map: |
             GENERAL.MD=65780
             ARCHITECTURE.MD=98495
-          enable-embeddings: true
