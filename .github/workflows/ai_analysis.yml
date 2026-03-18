@@ -24,7 +24,7 @@ jobs:
           prompts-folder: docs/gen/prompts
           output-folder: docs/gen/docs
           openai-model: gpt-5.2-codex
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          codex-api-key: ${{ secrets.OPENAI_API_KEY }}
           enable-git: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
           enable-confluence: false
